@@ -1,0 +1,1560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ROSE — Recursive Operating System for Execution</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --surface: #111111;
+      --surface2: #1a1a1a;
+      --border: #222222;
+      --border-light: #2e2e2e;
+      --text: #e8e4dc;
+      --text-muted: #6b6560;
+      --text-dim: #3d3a36;
+      --accent: #c8a96e;
+      --accent-dim: #8a7249;
+      --green: #4a9b6f;
+      --red: #9b4a4a;
+      --yellow: #9b8a4a;
+      --radius: 4px;
+      --font-display: 'DM Serif Display', Georgia, serif;
+      --font-body: 'DM Sans', sans-serif;
+      --font-mono: 'DM Mono', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 15px;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ── SCREENS ── */
+    .screen { display: none; min-height: 100vh; }
+    .screen.active { display: flex; }
+
+    /* ── LANDING ── */
+    #screen-landing {
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 24px;
+      text-align: center;
+    }
+
+    .sigil {
+      font-size: 28px;
+      letter-spacing: 16px;
+      color: var(--accent-dim);
+      margin-bottom: 40px;
+    }
+
+    .landing-title {
+      font-family: var(--font-display);
+      font-size: clamp(52px, 10vw, 88px);
+      letter-spacing: -2px;
+      line-height: 1;
+      margin-bottom: 16px;
+      color: var(--text);
+    }
+
+    .landing-sub {
+      font-size: 13px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 56px;
+    }
+
+    .landing-body {
+      max-width: 480px;
+      color: var(--text-muted);
+      font-size: 15px;
+      line-height: 1.8;
+      margin-bottom: 48px;
+    }
+
+    .landing-body strong {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      padding: 14px 36px;
+      font-family: var(--font-body);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      cursor: pointer;
+      border-radius: var(--radius);
+      transition: opacity 0.2s;
+    }
+
+    .btn-primary:hover { opacity: 0.85; }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border-light);
+      padding: 12px 28px;
+      font-family: var(--font-body);
+      font-size: 13px;
+      cursor: pointer;
+      border-radius: var(--radius);
+      transition: all 0.2s;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--text-muted);
+      color: var(--text);
+    }
+
+    .free-note {
+      margin-top: 20px;
+      font-size: 12px;
+      color: var(--text-dim);
+      letter-spacing: 1px;
+    }
+
+    /* ── AUTH ── */
+    #screen-auth {
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 24px;
+    }
+
+    .auth-box {
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .auth-back {
+      font-size: 12px;
+      color: var(--text-muted);
+      cursor: pointer;
+      letter-spacing: 1px;
+      margin-bottom: 40px;
+      display: inline-block;
+    }
+
+    .auth-back:hover { color: var(--text); }
+
+    .auth-title {
+      font-family: var(--font-display);
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+
+    .auth-sub {
+      color: var(--text-muted);
+      font-size: 14px;
+      margin-bottom: 32px;
+    }
+
+    .field {
+      margin-bottom: 20px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .field input {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 12px 16px;
+      font-family: var(--font-body);
+      font-size: 15px;
+      border-radius: var(--radius);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .field input:focus { border-color: var(--accent-dim); }
+
+    .field input::placeholder { color: var(--text-dim); }
+
+    /* ── SETUP QUESTIONS ── */
+    #screen-setup {
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 24px;
+    }
+
+    .setup-box {
+      width: 100%;
+      max-width: 560px;
+    }
+
+    .step-label {
+      font-size: 11px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--accent-dim);
+      margin-bottom: 32px;
+    }
+
+    .question-text {
+      font-family: var(--font-display);
+      font-size: clamp(22px, 4vw, 32px);
+      line-height: 1.3;
+      margin-bottom: 32px;
+    }
+
+    .options-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .option-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 16px 20px;
+      text-align: left;
+      cursor: pointer;
+      border-radius: var(--radius);
+      font-family: var(--font-body);
+      font-size: 15px;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .option-btn:hover {
+      border-color: var(--accent-dim);
+      background: var(--surface2);
+    }
+
+    .option-btn.selected {
+      border-color: var(--accent);
+      background: var(--surface2);
+      color: var(--accent);
+    }
+
+    .option-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      border: 1px solid var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    .option-btn.selected .option-dot {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    /* ── CHAT / CORE QUESTIONS ── */
+    #screen-intake {
+      flex-direction: column;
+    }
+
+    .intake-header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .intake-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-mark {
+      width: 36px;
+      height: 36px;
+      background: var(--accent);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-size: 18px;
+      color: var(--bg);
+    }
+
+    .brand-name {
+      font-family: var(--font-display);
+      font-size: 18px;
+    }
+
+    .intake-progress {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .progress-bar {
+      width: 120px;
+      height: 2px;
+      background: var(--border);
+      border-radius: 1px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 1px;
+      transition: width 0.4s ease;
+    }
+
+    .progress-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    .messages-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 32px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      max-width: 720px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .msg {
+      display: flex;
+      gap: 12px;
+      animation: fadeUp 0.3s ease;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .msg-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-family: var(--font-display);
+    }
+
+    .msg.rose .msg-avatar {
+      background: var(--accent);
+      color: var(--bg);
+    }
+
+    .msg.user .msg-avatar {
+      background: var(--surface2);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+
+    .msg.user { flex-direction: row-reverse; }
+
+    .msg-bubble {
+      max-width: 80%;
+      padding: 12px 16px;
+      border-radius: var(--radius);
+      font-size: 15px;
+      line-height: 1.7;
+    }
+
+    .msg.rose .msg-bubble {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .msg.user .msg-bubble {
+      background: var(--surface2);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+
+    .typing-dots {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      padding: 4px 0;
+    }
+
+    .typing-dots span {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--text-dim);
+      animation: dot 1.2s infinite;
+    }
+
+    .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes dot {
+      0%, 60%, 100% { opacity: 0.3; transform: scale(1); }
+      30% { opacity: 1; transform: scale(1.2); }
+    }
+
+    .input-area {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 16px 24px;
+      flex-shrink: 0;
+    }
+
+    .input-row {
+      max-width: 720px;
+      margin: 0 auto;
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+    }
+
+    .input-wrap {
+      flex: 1;
+      position: relative;
+    }
+
+    .input-wrap textarea {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 12px 16px;
+      font-family: var(--font-body);
+      font-size: 15px;
+      border-radius: var(--radius);
+      outline: none;
+      resize: none;
+      min-height: 48px;
+      max-height: 160px;
+      transition: border-color 0.2s;
+      line-height: 1.5;
+    }
+
+    .input-wrap textarea:focus { border-color: var(--accent-dim); }
+    .input-wrap textarea::placeholder { color: var(--text-dim); }
+
+    .char-counter {
+      position: absolute;
+      bottom: 8px;
+      right: 12px;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--text-dim);
+      pointer-events: none;
+    }
+
+    .char-counter.warning { color: var(--yellow); }
+    .char-counter.over { color: var(--red); }
+
+    .send-btn {
+      background: var(--accent);
+      border: none;
+      color: var(--bg);
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: opacity 0.2s;
+    }
+
+    .send-btn:hover { opacity: 0.85; }
+    .send-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    /* ── LOADING ── */
+    #screen-loading {
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 24px;
+      text-align: center;
+    }
+
+    .loading-sigil {
+      font-family: var(--font-display);
+      font-size: 48px;
+      color: var(--accent);
+      margin-bottom: 40px;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.6; }
+      50% { opacity: 1; }
+    }
+
+    .loading-title {
+      font-family: var(--font-display);
+      font-size: 24px;
+      margin-bottom: 12px;
+    }
+
+    .loading-sub {
+      color: var(--text-muted);
+      font-size: 14px;
+      margin-bottom: 40px;
+      font-family: var(--font-mono);
+    }
+
+    .loading-bar-wrap {
+      width: 280px;
+      height: 1px;
+      background: var(--border);
+      border-radius: 1px;
+      overflow: hidden;
+    }
+
+    .loading-bar-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 1px;
+      transition: width 0.6s ease;
+      width: 0%;
+    }
+
+    /* ── SCORE REVEAL ── */
+    #screen-score {
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 24px;
+      text-align: center;
+    }
+
+    .score-label {
+      font-size: 11px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+    }
+
+    .score-number {
+      font-family: var(--font-display);
+      font-size: clamp(80px, 18vw, 140px);
+      line-height: 1;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+
+    .score-denom {
+      font-size: 16px;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      margin-bottom: 24px;
+    }
+
+    .score-band {
+      font-size: 18px;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    .score-band-desc {
+      color: var(--text-muted);
+      font-size: 14px;
+      max-width: 360px;
+      margin-bottom: 40px;
+    }
+
+    .score-breakdown {
+      width: 100%;
+      max-width: 600px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 32px;
+      text-align: left;
+    }
+
+    .breakdown-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .breakdown-body {
+      display: none;
+    }
+
+    .breakdown-body.open { display: block; }
+
+    .breakdown-row {
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: 100px 1fr auto;
+      gap: 12px;
+      align-items: start;
+      font-size: 13px;
+    }
+
+    .breakdown-row:last-child { border-bottom: none; }
+
+    .breakdown-q {
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding-top: 2px;
+    }
+
+    .breakdown-rationale { color: var(--text); }
+
+    .breakdown-score {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .score-0 { color: var(--red); }
+    .score-1 { color: var(--yellow); }
+    .score-2 { color: var(--text-muted); }
+    .score-3 { color: var(--green); }
+
+    .btn-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    /* ── DASHBOARD ── */
+    #screen-dashboard {
+      flex-direction: column;
+    }
+
+    .dash-header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .dash-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 32px 24px;
+      max-width: 800px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .dash-section-title {
+      font-size: 11px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
+    .cycle-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+
+    .cycle-card:hover { border-color: var(--border-light); }
+
+    .cycle-card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .cycle-name {
+      font-size: 16px;
+      font-weight: 500;
+    }
+
+    .cycle-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+      font-family: var(--font-mono);
+    }
+
+    .cycle-score-badge {
+      font-family: var(--font-display);
+      font-size: 28px;
+      color: var(--accent);
+      line-height: 1;
+    }
+
+    .status-pill {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 2px;
+      font-size: 11px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+
+    .status-pill.stable { background: rgba(74, 155, 111, 0.15); color: var(--green); }
+    .status-pill.review { background: rgba(155, 138, 74, 0.15); color: var(--yellow); }
+    .status-pill.closed { background: rgba(107, 101, 96, 0.15); color: var(--text-muted); }
+
+    .days-remaining {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 80px 24px;
+      color: var(--text-muted);
+    }
+
+    .empty-state h3 {
+      font-family: var(--font-display);
+      font-size: 24px;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    /* ── ERRORS ── */
+    .error-msg {
+      background: rgba(155, 74, 74, 0.1);
+      border: 1px solid rgba(155, 74, 74, 0.3);
+      color: #c47a7a;
+      padding: 12px 16px;
+      border-radius: var(--radius);
+      font-size: 13px;
+      margin-bottom: 16px;
+    }
+
+    /* ── UTILITIES ── */
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 32px 0;
+    }
+
+    .tier-badge {
+      font-size: 11px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 2px;
+      background: var(--surface2);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+
+    .tier-badge.pro {
+      background: rgba(200, 169, 110, 0.1);
+      color: var(--accent);
+      border-color: var(--accent-dim);
+    }
+
+    /* ── UPGRADE MODAL ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      z-index: 100;
+      display: none;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal-box {
+      background: var(--surface);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      padding: 40px;
+      max-width: 480px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .modal-title {
+      font-family: var(--font-display);
+      font-size: 28px;
+      margin-bottom: 12px;
+    }
+
+    .modal-body {
+      color: var(--text-muted);
+      font-size: 14px;
+      line-height: 1.8;
+      margin-bottom: 32px;
+    }
+
+    .modal-features {
+      text-align: left;
+      margin: 20px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .modal-feature {
+      font-size: 13px;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .modal-feature::before {
+      content: '→';
+      color: var(--accent);
+      font-size: 12px;
+    }
+
+    @media (max-width: 600px) {
+      .breakdown-row { grid-template-columns: 1fr; }
+      .btn-row { flex-direction: column; }
+      .btn-row button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     SCREEN: LANDING
+══════════════════════════════════════════ -->
+<div id="screen-landing" class="screen active">
+  <div class="sigil">∴ ⁞ ∞</div>
+  <h1 class="landing-title">ROSE</h1>
+  <p class="landing-sub">Recursive Operating System for Execution</p>
+  <div class="landing-body">
+    <p>I'll ask <strong>12 structural questions</strong> and calculate your R-Score — a measure of how likely you are to finish what you're building.</p>
+    <br>
+    <p>No dashboards. No tracking. Just structural clarity.</p>
+  </div>
+  <button class="btn-primary" onclick="showScreen('screen-auth')">Begin</button>
+  <p class="free-note">3 free cycles · No credit card required</p>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN: AUTH
+══════════════════════════════════════════ -->
+<div id="screen-auth" class="screen">
+  <div class="auth-box">
+    <span class="auth-back" onclick="showScreen('screen-landing')">← Back</span>
+    <h2 class="auth-title">Start here</h2>
+    <p class="auth-sub">Your data is tied to your email. No password required.</p>
+    <div id="auth-error"></div>
+    <div class="field">
+      <label>Your name</label>
+      <input type="text" id="auth-name" placeholder="Jane Smith" autocomplete="name">
+    </div>
+    <div class="field">
+      <label>Email address</label>
+      <input type="email" id="auth-email" placeholder="you@example.com" autocomplete="email">
+    </div>
+    <div class="field">
+      <label>Timezone</label>
+      <input type="text" id="auth-timezone" placeholder="America/New_York" value="">
+    </div>
+    <br>
+    <button class="btn-primary" onclick="handleAuth()" style="width:100%">Continue</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN: SETUP (3 non-scored questions)
+══════════════════════════════════════════ -->
+<div id="screen-setup" class="screen">
+  <div class="setup-box">
+    <div class="step-label">Setup — <span id="setup-step">1</span> of 3</div>
+    <div id="setup-question" class="question-text"></div>
+    <div id="setup-options" class="options-grid"></div>
+    <br>
+    <div id="setup-error" class="error-msg" style="display:none"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN: INTAKE (12 core questions)
+══════════════════════════════════════════ -->
+<div id="screen-intake" class="screen">
+  <div class="intake-header">
+    <div class="intake-brand">
+      <div class="brand-mark">R</div>
+      <span class="brand-name">ROSE</span>
+    </div>
+    <div class="intake-progress">
+      <div class="progress-bar">
+        <div class="progress-fill" id="intake-progress-fill"></div>
+      </div>
+      <span class="progress-label" id="intake-progress-label">0 / 12</span>
+    </div>
+  </div>
+
+  <div id="messages-area" class="messages-area"></div>
+
+  <div class="input-area" id="intake-input-area" style="display:none">
+    <div class="input-row">
+      <div class="input-wrap">
+        <textarea id="intake-input" placeholder="Type your answer…" rows="1"
+          oninput="autoResize(this); updateCharCount(this)"
+          onkeydown="handleIntakeKey(event)"></textarea>
+        <span class="char-counter" id="char-counter">0 / 400</span>
+      </div>
+      <button class="send-btn" id="send-btn" onclick="sendAnswer()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="22" y1="2" x2="11" y2="13"></line>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN: LOADING
+══════════════════════════════════════════ -->
+<div id="screen-loading" class="screen">
+  <div class="loading-sigil">∴</div>
+  <div class="loading-title">Calculating R-Score</div>
+  <div class="loading-sub" id="loading-text">Analyzing structural patterns…</div>
+  <div class="loading-bar-wrap">
+    <div class="loading-bar-fill" id="loading-bar-fill"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN: SCORE REVEAL
+══════════════════════════════════════════ -->
+<div id="screen-score" class="screen">
+  <div class="score-label">Baseline R-Score</div>
+  <div class="score-number" id="score-number">0</div>
+  <div class="score-denom">/ 100</div>
+  <div class="score-band" id="score-band"></div>
+  <div class="score-band-desc" id="score-band-desc"></div>
+
+  <div class="score-breakdown">
+    <div class="breakdown-header" onclick="toggleBreakdown()">
+      <span>Question Breakdown</span>
+      <span id="breakdown-toggle">Show ↓</span>
+    </div>
+    <div class="breakdown-body" id="breakdown-body"></div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn-primary" onclick="showScreen('screen-dashboard')">View Dashboard</button>
+    <button class="btn-secondary" onclick="startNewCycle()">New Cycle</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN: DASHBOARD
+══════════════════════════════════════════ -->
+<div id="screen-dashboard" class="screen">
+  <div class="dash-header">
+    <div class="intake-brand">
+      <div class="brand-mark">R</div>
+      <span class="brand-name">ROSE</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <span class="tier-badge" id="dash-tier-badge">Free</span>
+      <button class="btn-secondary" style="padding:8px 16px;font-size:12px" onclick="startNewCycle()">+ New Cycle</button>
+    </div>
+  </div>
+  <div class="dash-body">
+    <div id="dash-free-note" style="margin-bottom:24px;display:none">
+      <div style="background:var(--surface);border:1px solid var(--border);padding:16px 20px;border-radius:var(--radius);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+        <div>
+          <div style="font-size:13px;font-weight:500">Free tier</div>
+          <div style="font-size:12px;color:var(--text-muted)" id="dash-cycles-note"></div>
+        </div>
+        <button class="btn-secondary" style="font-size:12px;padding:8px 16px" onclick="showUpgradeModal()">Upgrade to Pro</button>
+      </div>
+    </div>
+    <div class="dash-section-title">Active Cycles</div>
+    <div id="dash-cycles"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     UPGRADE MODAL
+══════════════════════════════════════════ -->
+<div class="modal-overlay" id="upgrade-modal">
+  <div class="modal-box">
+    <div class="modal-title">Upgrade to Pro</div>
+    <div class="modal-body">
+      You've used your free cycles. Your structural history remains accessible.
+      <div class="modal-features">
+        <div class="modal-feature">Unlimited cycles</div>
+        <div class="modal-feature">60 and 90-day windows</div>
+        <div class="modal-feature">Extensions up to 120 days</div>
+        <div class="modal-feature">Full historical dashboard</div>
+        <div class="modal-feature">Priority support</div>
+      </div>
+    </div>
+    <button class="btn-primary" style="width:100%;margin-bottom:12px">Upgrade — $99/month</button>
+    <button class="btn-secondary" style="width:100%" onclick="closeUpgradeModal()">Not now</button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// CONFIG
+// ══════════════════════════════════════════
+const API_URL = 'https://script.google.com/macros/s/AKfycbxbHn_f5OtvwP7WxWiHKk-Qodfxy7HyzSPXC3c08-0ufYgGaDo7ZxiXVFlrYvlsT-yzyQ/exec';
+const CHAR_LIMIT = 400;
+
+// ══════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════
+let state = {
+  userId: null,
+  cycleId: null,
+  setupAnswers: {},
+  coreAnswers: {},
+  setupStep: 0,
+  intakeStep: 0,
+  scores: null,
+  rationales: null,
+  rScore: null,
+  reviewStatus: null
+};
+
+// ══════════════════════════════════════════
+// SETUP QUESTIONS
+// ══════════════════════════════════════════
+const SETUP_QUESTIONS = [
+  {
+    text: 'What type of cycle is this?',
+    key: 'type',
+    options: ['Solo', 'Team', 'Enterprise']
+  },
+  {
+    text: 'How many people will actively work on this cycle?',
+    key: 'team_size',
+    options: ['1', '2–3', '4–10', '11+']
+  },
+  {
+    text: 'What is your role in this cycle?',
+    key: 'role',
+    options: ['Owner', 'Supervisor', 'Contributor']
+  }
+];
+
+// ══════════════════════════════════════════
+// 12 CORE QUESTIONS (v5.3 locked)
+// ══════════════════════════════════════════
+const CORE_QUESTIONS = [
+  { key: 'q1',  text: 'What exactly are you building?' },
+  { key: 'q2',  text: 'How will you know when you\'re done?' },
+  { key: 'q3',  text: 'What are you NOT doing this cycle?' },
+  { key: 'q4',  text: 'Can you realistically finish this in time?' },
+  { key: 'q5',  text: 'What do you need to make this happen?' },
+  { key: 'q6',  text: 'What are you waiting on from others?' },
+  { key: 'q7',  text: 'What\'s limiting you?' },
+  { key: 'q8',  text: 'Who decides if this is done?' },
+  { key: 'q9',  text: 'What could kill this project?' },
+  { key: 'q10', text: 'What would make you stop and rethink this?' },
+  { key: 'q11', text: 'How will you prove it\'s done?' },
+  { key: 'q12', text: 'Does this actually fit in the window you picked?' }
+];
+
+const Q_LABELS = [
+  'Scope', 'Closure Integrity', 'Scope Restraint', 'Timeline',
+  'Capacity', 'Dependencies', 'Constraints', 'Ownership',
+  'Risk', 'Breaker', 'Closure Docs', 'Cycle Fit'
+];
+
+// ══════════════════════════════════════════
+// SCREEN MANAGEMENT
+// ══════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ══════════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════════
+function handleAuth() {
+  const name = document.getElementById('auth-name').value.trim();
+  const email = document.getElementById('auth-email').value.trim();
+  const timezone = document.getElementById('auth-timezone').value.trim() || 'America/New_York';
+  const errEl = document.getElementById('auth-error');
+
+  errEl.innerHTML = '';
+
+  if (!name) { errEl.innerHTML = '<div class="error-msg">Please enter your name.</div>'; return; }
+  if (!email || !email.includes('@')) { errEl.innerHTML = '<div class="error-msg">Please enter a valid email.</div>'; return; }
+
+  callAPI({ action: 'createUser', name, email, timezone })
+    .then(res => {
+      if (!res.success) throw new Error(res.error || 'Failed to create user');
+      state.userId = res.user_id;
+      localStorage.setItem('rose_user_id', res.user_id);
+      localStorage.setItem('rose_email', email);
+      showScreen('screen-setup');
+      renderSetupQuestion();
+    })
+    .catch(err => {
+      errEl.innerHTML = '<div class="error-msg">' + err.message + '</div>';
+    });
+}
+
+// ══════════════════════════════════════════
+// SETUP FLOW
+// ══════════════════════════════════════════
+function renderSetupQuestion() {
+  const q = SETUP_QUESTIONS[state.setupStep];
+  document.getElementById('setup-step').textContent = state.setupStep + 1;
+  document.getElementById('setup-question').textContent = q.text;
+
+  const optionsEl = document.getElementById('setup-options');
+  optionsEl.innerHTML = q.options.map(o =>
+    `<button class="option-btn" onclick="selectSetupOption('${o}', this)">
+      <div class="option-dot"></div>
+      <span>${o}</span>
+    </button>`
+  ).join('');
+}
+
+function selectSetupOption(value, btn) {
+  document.querySelectorAll('#setup-options .option-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+
+  const key = SETUP_QUESTIONS[state.setupStep].key;
+  state.setupAnswers[key] = value;
+
+  setTimeout(() => {
+    state.setupStep++;
+    if (state.setupStep >= SETUP_QUESTIONS.length) {
+      beginIntake();
+    } else {
+      renderSetupQuestion();
+    }
+  }, 300);
+}
+
+// ══════════════════════════════════════════
+// INTAKE FLOW
+// ══════════════════════════════════════════
+function beginIntake() {
+  // Create cycle first
+  callAPI({
+    action: 'createCycle',
+    user_id: state.userId,
+    cycle_window: 30,
+    project_name: 'Cycle ' + new Date().toLocaleDateString()
+  })
+  .then(res => {
+    if (!res.success) {
+      if (res.reason === 'upgrade_required') { showUpgradeModal(); return; }
+      throw new Error(res.error || 'Failed to create cycle');
+    }
+    state.cycleId = res.cycle_id;
+    showScreen('screen-intake');
+    state.intakeStep = 0;
+    addRoseMessage('Setup complete. Now I\'ll ask 12 structural questions. Take your time — clarity here determines your R-Score accuracy.');
+    setTimeout(() => askCoreQuestion(), 1000);
+  })
+  .catch(err => {
+    document.getElementById('setup-error').style.display = 'block';
+    document.getElementById('setup-error').textContent = err.message;
+  });
+}
+
+function askCoreQuestion() {
+  if (state.intakeStep >= CORE_QUESTIONS.length) {
+    submitIntake();
+    return;
+  }
+
+  const q = CORE_QUESTIONS[state.intakeStep];
+  const label = Q_LABELS[state.intakeStep];
+
+  updateIntakeProgress();
+  document.getElementById('intake-input-area').style.display = 'block';
+
+  addRoseMessage(
+    '<span style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--accent-dim);display:block;margin-bottom:6px">Q' + (state.intakeStep + 1) + ' — ' + label + '</span>' + q.text
+  );
+
+  const input = document.getElementById('intake-input');
+  input.value = '';
+  input.disabled = false;
+  updateCharCount(input);
+  document.getElementById('send-btn').disabled = false;
+  setTimeout(() => input.focus(), 100);
+}
+
+function sendAnswer() {
+  const input = document.getElementById('intake-input');
+  const text = input.value.trim();
+  if (!text) return;
+  if (text.length > CHAR_LIMIT) return;
+
+  const key = CORE_QUESTIONS[state.intakeStep].key;
+  state.coreAnswers[key] = text;
+
+  addUserMessage(text);
+  input.value = '';
+  input.disabled = true;
+  document.getElementById('send-btn').disabled = true;
+  updateCharCount(input);
+
+  state.intakeStep++;
+
+  if (state.intakeStep < CORE_QUESTIONS.length) {
+    setTimeout(() => {
+      showTyping(() => askCoreQuestion());
+    }, 400);
+  } else {
+    updateIntakeProgress();
+    setTimeout(() => {
+      addRoseMessage('All 12 answers received. Calculating your R-Score…');
+      setTimeout(() => submitIntake(), 1200);
+    }, 600);
+  }
+}
+
+function submitIntake() {
+  showScreen('screen-loading');
+  animateLoadingBar();
+
+  callAPI({
+    action: 'submitStart',
+    cycle_id: state.cycleId,
+    user_id: state.userId,
+    setup_answers: state.setupAnswers,
+    core_answers: state.coreAnswers
+  })
+  .then(res => {
+    if (!res.success) throw new Error(res.error || 'Scoring failed');
+
+    state.scores = res.scores;
+    state.rationales = res.rationales;
+    state.rScore = res.r_score;
+    state.reviewStatus = res.review_status;
+
+    setTimeout(() => {
+      showScreen('screen-score');
+      renderScoreReveal(res);
+    }, 1800);
+  })
+  .catch(err => {
+    showScreen('screen-intake');
+    addRoseMessage('Scoring encountered an issue: ' + err.message + '. Please try again.');
+    document.getElementById('intake-input-area').style.display = 'block';
+  });
+}
+
+// ══════════════════════════════════════════
+// SCORE REVEAL
+// ══════════════════════════════════════════
+function renderScoreReveal(res) {
+  const scoreEl = document.getElementById('score-number');
+  const band = res.score_bands || {};
+
+  animateNumber(scoreEl, 0, res.r_score, 1200);
+  document.getElementById('score-band').textContent = band.band || '';
+  document.getElementById('score-band-desc').textContent = band.description || '';
+
+  // Breakdown
+  const body = document.getElementById('breakdown-body');
+  body.innerHTML = CORE_QUESTIONS.map((q, i) => {
+    const key = 'q' + (i+1);
+    const score = res.scores[key];
+    const rationale = res.rationales ? res.rationales[key] : '';
+    return `<div class="breakdown-row">
+      <div class="breakdown-q">Q${i+1} · ${Q_LABELS[i]}</div>
+      <div class="breakdown-rationale">${rationale || '—'}</div>
+      <div class="breakdown-score score-${score}">${score}/3</div>
+    </div>`;
+  }).join('');
+}
+
+function toggleBreakdown() {
+  const body = document.getElementById('breakdown-body');
+  const toggle = document.getElementById('breakdown-toggle');
+  body.classList.toggle('open');
+  toggle.textContent = body.classList.contains('open') ? 'Hide ↑' : 'Show ↓';
+}
+
+// ══════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════
+function loadDashboard() {
+  showScreen('screen-dashboard');
+
+  callAPI({ action: 'getDashboard', user_id: state.userId })
+    .then(res => {
+      if (!res.success) return;
+
+      const user = res.user;
+
+      // Tier badge
+      const tierBadge = document.getElementById('dash-tier-badge');
+      tierBadge.textContent = user.tier.charAt(0).toUpperCase() + user.tier.slice(1);
+      if (user.tier === 'pro') tierBadge.classList.add('pro');
+
+      // Free tier note
+      if (user.tier === 'free') {
+        const noteEl = document.getElementById('dash-free-note');
+        noteEl.style.display = 'block';
+        document.getElementById('dash-cycles-note').textContent =
+          user.cycles_remaining + ' of 3 free cycles remaining';
+      }
+
+      // Cycles
+      const cyclesEl = document.getElementById('dash-cycles');
+      if (!res.cycles || res.cycles.length === 0) {
+        cyclesEl.innerHTML = `<div class="empty-state">
+          <h3>No cycles yet</h3>
+          <p>Start your first cycle to get your R-Score.</p>
+        </div>`;
+        return;
+      }
+
+      cyclesEl.innerHTML = res.cycles.map(c => {
+        const statusClass = (c.status || '').toLowerCase();
+        const score = c.r_score !== null ? c.r_score : '—';
+        return `<div class="cycle-card">
+          <div class="cycle-card-top">
+            <div>
+              <div class="cycle-name">${c.project_name}</div>
+              <div class="cycle-meta">${c.cycle_window}-day cycle · ${c.start_date} → ${c.end_date}</div>
+            </div>
+            <div class="cycle-score-badge">${score}</div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <span class="status-pill ${statusClass}">${c.status}</span>
+            <span class="days-remaining">${c.days_remaining > 0 ? c.days_remaining + ' days left' : 'Closed'}</span>
+          </div>
+        </div>`;
+      }).join('');
+    });
+}
+
+function startNewCycle() {
+  // Reset cycle state
+  state.cycleId = null;
+  state.setupAnswers = {};
+  state.coreAnswers = {};
+  state.setupStep = 0;
+  state.intakeStep = 0;
+  state.scores = null;
+  state.rationales = null;
+  state.rScore = null;
+
+  // Check if user can start a new cycle
+  callAPI({ action: 'getDashboard', user_id: state.userId })
+    .then(res => {
+      if (res.user && res.user.cycles_remaining <= 0 && res.user.tier === 'free') {
+        showUpgradeModal();
+        return;
+      }
+      showScreen('screen-setup');
+      renderSetupQuestion();
+    });
+}
+
+// ══════════════════════════════════════════
+// UPGRADE MODAL
+// ══════════════════════════════════════════
+function showUpgradeModal() {
+  document.getElementById('upgrade-modal').classList.add('open');
+}
+
+function closeUpgradeModal() {
+  document.getElementById('upgrade-modal').classList.remove('open');
+}
+
+// ══════════════════════════════════════════
+// API HELPER
+// ══════════════════════════════════════════
+function callAPI(data) {
+  return fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify(data),
+    redirect: 'follow'
+  })
+  .then(r => r.json());
+}
+
+// ══════════════════════════════════════════
+// CHAT HELPERS
+// ══════════════════════════════════════════
+function addRoseMessage(html) {
+  const area = document.getElementById('messages-area');
+  const div = document.createElement('div');
+  div.className = 'msg rose';
+  div.innerHTML = `<div class="msg-avatar">R</div><div class="msg-bubble">${html}</div>`;
+  area.appendChild(div);
+  scrollBottom();
+}
+
+function addUserMessage(text) {
+  const area = document.getElementById('messages-area');
+  const div = document.createElement('div');
+  div.className = 'msg user';
+  div.innerHTML = `<div class="msg-avatar">U</div><div class="msg-bubble">${escapeHtml(text)}</div>`;
+  area.appendChild(div);
+  scrollBottom();
+}
+
+function showTyping(callback) {
+  const area = document.getElementById('messages-area');
+  const div = document.createElement('div');
+  div.className = 'msg rose';
+  div.id = 'typing-indicator';
+  div.innerHTML = `<div class="msg-avatar">R</div><div class="msg-bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div>`;
+  area.appendChild(div);
+  scrollBottom();
+  setTimeout(() => {
+    const t = document.getElementById('typing-indicator');
+    if (t) t.remove();
+    callback();
+  }, 700);
+}
+
+function scrollBottom() {
+  const area = document.getElementById('messages-area');
+  area.scrollTop = area.scrollHeight;
+}
+
+// ══════════════════════════════════════════
+// UI HELPERS
+// ══════════════════════════════════════════
+function updateIntakeProgress() {
+  const pct = (state.intakeStep / 12) * 100;
+  document.getElementById('intake-progress-fill').style.width = pct + '%';
+  document.getElementById('intake-progress-label').textContent = state.intakeStep + ' / 12';
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 160) + 'px';
+}
+
+function updateCharCount(el) {
+  const count = el.value.length;
+  const counter = document.getElementById('char-counter');
+  counter.textContent = count + ' / ' + CHAR_LIMIT;
+  counter.className = 'char-counter';
+  if (count > CHAR_LIMIT * 0.85) counter.className += ' warning';
+  if (count > CHAR_LIMIT) counter.className += ' over';
+  document.getElementById('send-btn').disabled = count > CHAR_LIMIT || count === 0;
+}
+
+function handleIntakeKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendAnswer();
+  }
+}
+
+function animateNumber(el, from, to, duration) {
+  const start = performance.now();
+  function step(now) {
+    const progress = Math.min((now - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    el.textContent = Math.round(from + (to - from) * eased);
+    if (progress < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+function animateLoadingBar() {
+  const bar = document.getElementById('loading-bar-fill');
+  const text = document.getElementById('loading-text');
+  const steps = [
+    [25, 'Parsing structural patterns…'],
+    [55, 'Evaluating finishability…'],
+    [80, 'Calculating R-Score…'],
+    [95, 'Preparing results…']
+  ];
+  let i = 0;
+  const interval = setInterval(() => {
+    if (i < steps.length) {
+      bar.style.width = steps[i][0] + '%';
+      text.textContent = steps[i][1];
+      i++;
+    } else {
+      clearInterval(interval);
+    }
+  }, 600);
+}
+
+function escapeHtml(text) {
+  return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ══════════════════════════════════════════
+// INIT — restore session if exists
+// ══════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  // Auto-detect timezone
+  try {
+    document.getElementById('auth-timezone').value = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  } catch(e) {}
+
+  // Restore session
+  const savedId = localStorage.getItem('rose_user_id');
+  if (savedId) {
+    state.userId = savedId;
+    loadDashboard();
+  }
+});
+</script>
+</body>
+</html>
